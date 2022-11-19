@@ -3,6 +3,7 @@
 //const { sample } = require("cypress/types/lodash");
 
 describe("Central de Atendimento ao Cliente TAT", function () {
+  const THREE_SECOND_IN_MS = 3000;
   beforeEach(function () {
     cy.visit("./src/index.html");
   });
@@ -176,5 +177,69 @@ describe("Central de Atendimento ao Cliente TAT", function () {
     cy.get("#privacy a").invoke("removeAttr", "target").click();
 
     cy.contains("Talking About Testing").should("be.visible");
+  });
+
+  it("verificar se a mensagem de enviar formulario some apos 3 segundos", () => {
+    cy.clock();
+    cy.fillMandatoryFieldsAndSubmit();
+    cy.get(".success").should("be.visible");
+    cy.tick(THREE_SECOND_IN_MS);
+    cy.get(".success").should("not.be.visible");
+  });
+
+  Cypress._.times(5, () => {
+    it("repitindo o teste 5 vezes 'verificar se a mensagem de enviar formulario some apos 3 segundos'", () => {
+      cy.clock();
+      cy.fillMandatoryFieldsAndSubmit();
+      cy.get(".success").should("be.visible");
+      cy.tick(THREE_SECOND_IN_MS);
+      cy.get(".success").should("not.be.visible");
+    });
+  });
+
+  it("exibe e esconde as mensagens de sucesso e erro usando o .invoke", () => {
+    cy.get(".success")
+      .should("not.be.visible")
+      .invoke("show")
+      .should("be.visible")
+      .and("contain", "Mensagem enviada com sucesso.")
+      .invoke("hide")
+      .should("not.be.visible");
+    cy.get(".error")
+      .should("not.be.visible")
+      .invoke("show")
+      .should("be.visible")
+      .and("contain", "Valide os campos obrigatórios!")
+      .invoke("hide")
+      .should("not.be.visible");
+  });
+
+  it("preenche a area de texto usando o comando invoke", () => {
+    const longText = Cypress._.repeat("0123456789", 20);
+
+    cy.get("#open-text-area")
+      .invoke("val", longText)
+      .should("have.value", longText);
+  });
+
+  it("faz uma requisição HTTP", () => {
+    cy.request(
+      "https://cac-tat.s3.eu-central-1.amazonaws.com/index.html"
+    ).should(function (response) {
+      const { status, statusText, body } = response;
+      expect(status).to.equal(200);
+      expect(statusText).to.equal("OK");
+      expect(body).to.include("CAC TAT");
+    });
+  });
+
+  it.only("Encontre o gato🐈 escondido", () => {
+    cy.get('#cat')
+      .invoke("show")
+      .should("be.visible")
+    cy.get('#title')
+      .invoke('text', 'CAT TAT')
+    cy.get('#subtitle')
+      .invoke('text', 'Eu amo 💚 games')
   });
 });
